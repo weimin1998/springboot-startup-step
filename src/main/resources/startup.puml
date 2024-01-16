@@ -1,0 +1,49 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+
+start
+
+:save main class type;
+note right
+used to collect bean definition
+endnote
+
+:deduce application type;
+note right
+1.servlet web
+2.reactive web
+3.none
+endnote
+
+:get BootstrapRegistryInitializer
+from classpath:META-INF/spring.factories;
+
+:get **ApplicationContextInitializer**
+from classpath:META-INF/spring.factories;
+note right
+ApplicationContextInitializer will be executed
+before applicationContext.refresh()
+to extend ApplicationContext
+endnote
+
+:get **ApplicationListener**
+from classpath:META-INF/spring.factories;
+note right
+event
+endnote
+
+:deduce main class;
+
+:get **SpringApplicationRunListener**
+from classpath:META-INF/spring.factories;
+note right
+use **SimpleApplicationEventMulticaster** to publish event
+endnote
+
+:publish application **starting** event;
+
+end
+
+
+@enduml
