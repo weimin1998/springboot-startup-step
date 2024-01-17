@@ -1,0 +1,157 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+
+start
+
+group new SpringApplication
+
+:save main class type;
+note right
+used to collect bean definition
+endnote
+
+:deduce application type;
+note right
+1.servlet web
+2.reactive web
+3.none
+endnote
+
+:get BootstrapRegistryInitializer
+from classpath:META-INF/spring.factories;
+
+:get **ApplicationContextInitializer**
+from classpath:META-INF/spring.factories;
+note right
+ApplicationContextInitializer will be executed
+before applicationContext.refresh()
+to extend ApplicationContext
+endnote
+
+:get **ApplicationListener**
+from classpath:META-INF/spring.factories;
+note right
+event
+endnote
+
+:deduce main class;
+
+end group
+
+group SpringApplication.run()
+
+:get **SpringApplicationRunListener**
+from classpath:META-INF/spring.factories;
+note right
+use **SimpleApplicationEventMulticaster** to publish event
+endnote
+
+:publish application **starting** event;
+
+:handle command line args,
+wrap as **DefaultApplicationArguments**;
+note right
+split with space:
+~--server.port=8080 --numbers=11,22,33 debug
+nonOptionArgs, start with ~-- , like --server.port=8080
+OptionArgs, like debug
+endnote
+
+:create Environment;
+note right
+**systemProperties**: jvm properties
+**systemEnvironment**: os properties
+servletConfigInitParams
+servletContextInitParams
+endnote
+
+:addConversionService;
+note left
+todo
+endnote
+
+:add commandLineArgs to Environment;
+
+:call configureProfiles(environment, args);
+note right
+empty method, implement by subclass
+endnote
+
+:handle invalid properties name;
+note right
+call ConfigurationPropertySources.attach(environment);
+endnote
+
+:publish event **environmentPrepared**;
+note right
+EnvironmentPostProcessorApplicationListener handle this event,
+use **EnvironmentPostProcessor**, to extend Environment
+endnote
+
+note left
+**EnvironmentPostProcessor:**
+RandomValuePropertySourceEnvironmentPostProcessor: add RandomValuePropertySource to environment
+SystemEnvironmentPropertySourceEnvironmentPostProcessor: **todo**
+SpringApplicationJsonEnvironmentPostProcessor: **todo**
+CloudFoundryVcapEnvironmentPostProcessor: **todo**
+ConfigDataEnvironmentPostProcessor: application file and bootstrap file
+DebugAgentEnvironmentPostProcessor: **todo**
+IntegrationPropertiesEnvironmentPostProcessor: META-INF/spring.integration.properties
+endnote
+
+:bing properties those start with "spring.main" to SpringApplication;
+
+:print spring boot Banner;
+
+:create ApplicationContext by application type;
+
+:applicationContext.setEnvironment(environment));
+
+:call **ApplicationContextInitializer** to extend applicationContext;
+
+:publish event contextPrepared;
+
+:put commandLineArgs **DefaultApplicationArguments** to singleton map;
+
+:set two fields;
+note right
+allowCircularReferences
+allowBeanDefinitionOverriding
+endnote
+
+:lazyInitialization;
+note left
+todo
+endnote
+
+:;
+
+:publish event contextLoaded;
+
+:applicationContext.refresh();
+note right
+startup embedded web server
+endnote
+
+:afterRefresh(context, applicationArguments);
+note right
+empty method, implement by subclass
+endnote
+
+:publish event started;
+
+:call all Runners;
+note right
+ApplicationRunner
+CommandLineRunner
+endnote
+
+:publish event ready;
+end group
+
+
+end
+
+
+@enduml
